@@ -1,0 +1,95 @@
+{
+  "name": "context-master",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A local library of evidence-linked specialists distilled from past agent sessions.",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1",
+    "build": "next build",
+    "start": "next start --hostname 127.0.0.1",
+    "typecheck": "next typegen && tsc --noEmit",
+    "lint": "eslint . --max-warnings 0",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "check": "npm run typecheck && npm run lint && npm test",
+    "mcp": "tsx scripts/mcp.ts",
+    "cli": "tsx scripts/cli.ts",
+    "desktop:dev": "node scripts/desktop-dev.cjs",
+    "desktop:build": "npm run build && node scripts/package-desktop.cjs && electron-builder --mac dir",
+    "desktop:dist": "npm run build && node scripts/package-desktop.cjs && electron-builder --mac dmg zip",
+    "desktop:smoke": "tsx scripts/smoke-desktop.ts",
+    "desktop:smoke:native": "tsx scripts/smoke-desktop-native.ts"
+  },
+  "dependencies": {
+    "@fontsource-variable/ibm-plex-sans": "^5.2.8",
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "@phosphor-icons/react": "^2.1.10",
+    "next": "^16.4.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.11.1",
+    "@playwright/test": "^1.58.2",
+    "@tailwindcss/postcss": "^4.2.2",
+    "@types/node": "^22.19.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "electron": "^41.0.0",
+    "electron-builder": "^26.0.12",
+    "esbuild": "^0.27.0",
+    "eslint": "^9.39.0",
+    "eslint-config-next": "^16.4.0",
+    "tailwindcss": "^4.2.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0"
+  },
+  "main": "desktop/main.cjs",
+  "build": {
+    "appId": "build.contextmaster.app",
+    "productName": "Context Master",
+    "asar": true,
+    "files": [
+      "desktop/**/*",
+      "package.json",
+      "!node_modules{,/**/*}"
+    ],
+    "extraResources": [
+      {
+        "from": "desktop-bundle",
+        "to": "web"
+      },
+      {
+        "from": "desktop-bundle/node_modules",
+        "to": "web/node_modules"
+      },
+      {
+        "from": "agent-bundle",
+        "to": "agent"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "desktop/icon.icns"
+    },
+    "directories": {
+      "output": "release",
+      "app": "desktop-app"
+    },
+    "npmRebuild": false
+  },
+  "type": "module",
+  "productName": "Context Master"
+}

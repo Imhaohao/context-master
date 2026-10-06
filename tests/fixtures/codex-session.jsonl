@@ -1,0 +1,6 @@
+{"timestamp":"2026-10-06T20:00:00.000Z","type":"session_meta","payload":{"id":"codex-demo-1","cwd":"/tmp/example-project"}}
+{"timestamp":"2026-10-06T20:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"How should I structure this parser?"}}
+{"timestamp":"2026-10-06T20:00:01.000Z","type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"How should I structure this parser?"}]}}
+{"timestamp":"2026-10-06T20:00:02.000Z","type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"Keep format detection separate from normalization."},{"type":"function_call","name":"ignored_tool","arguments":"{\"secret\":true}"}]}}
+{"timestamp":"2026-10-06T20:00:02.000Z","type":"event_msg","payload":{"type":"agent_message","message":"Keep format detection separate from normalization."}}
+{"timestamp":"2026-10-06T20:00:03.000Z","type":"response_item","payload":{"type":"reasoning","text":"This hidden reasoning must not be imported."}}

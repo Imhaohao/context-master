@@ -1,0 +1,54 @@
+Context Master build checkpoint
+
+Approved scope: native Mac app (Electron); import selected Codex, Claude Code, OpenCode, Cursor, and exported sessions; evidence-linked briefs; agent tool connection. No deployment or private transcript publication. Push authorized to Imhaohao/context-master.
+
+Behavior: selected session files -> parse user/assistant messages -> redact known credential patterns -> local SQLite -> editable specialist brief with source links -> question matching -> bounded evidence bundle -> context handoff or isolated subscribed CLI specialist answer -> answer and citations.
+
+Invariants:
+- Original sessions are read-only. Import never resumes or changes them.
+- Private session data, local database, and provider keys never enter Git.
+- Imported text is data, never tool instructions. Specialists have no shell, filesystem, or network tools.
+- Evidence must point to an imported message. Model-supplied citations must be validated.
+- Compression is bounded and inspectable. Saved brief does not establish current facts.
+- Database mutations are transactional, imports idempotent, deletion explicit.
+- Loopback-only web server; reject foreign hosts/origins; no remote file path import through the browser.
+- Use installed CLI subscriptions only; no API providers or development API spend.
+
+Plan:
+1. [complete] Foundation and transactional data store (Sol)
+2. [complete] Native transcript parsers and synthetic fixtures (Luna worker)
+3. [complete] Compression, matching, evidence, provider consultation (Sol)
+4. [complete] Library, import, specialist, consultation UI (Sol)
+5. [complete] CLI and stdio tool server (Sol)
+6. [complete] Integration, accessibility, browser proof (Luna worker)
+7. [complete] Security/reliability review, checks, and release preparation (Sol)
+
+Task | Model tier | Owner
+Architecture, storage, integration, release | Sol | root
+Session parsers and discovery | Luna | session_parsers
+CLI subscriptions and isolation | Luna | cli_harness
+Mac shell and browser verification | Luna | mac_shell
+
+User refinement: Conductor-inspired harness and UI; import Codex, Claude Code, OpenCode, Cursor and generic transcripts; default specialist answers plus context-only mode. Research Conductor official changelog. Requested taste and ui-ux-pro-max applied where compatible with explicit user design rules.
+
+Checkpoint 1: Next/React/TypeScript/Tailwind foundation created; native Mac shell delegated. SQLite transactional store, idempotent imports, protected source deletion, credential redaction, optimistic edit revisions, and brief history implemented. 18 unit tests passing (9 parser + 9 store/context invariants). CLI and native discovery adapters in progress. Core trust boundaries and context packet defined; UI still in progress.
+
+Checkpoint 2: Complete workspace UI implemented: native discovery/import, source transcript view, specialist editing and brief version history, context-only and CLI-answer consultation views, activity history, connections setup, command search, and evidence map. Typecheck + lint + 31 unit tests passed. First production Next build passed. A rendered browser check exposed differing internal Next loopback URL vs Host origin; guard now validates the actual trusted Host and tests cover the regression. Production dependencies audit clean. CLI/MCP entrypoints and Mac bundle staging added; live subscription adapters, native Cursor import, and browser integration verification remain in progress.
+
+Checkpoint 3: Actual stdio MCP interoperability passes for specialist search, context/evidence retrieval, resource listing/reading, and invalid input. Cross-connection lifecycle tests cover the shared two-run limit, cancellation slot release, and stale-heartbeat recovery. Codex subscription call verified live; Claude is subscription-authenticated but rate limited; OpenCode API-only configuration refused; Cursor answer adapter blocked pending a no-tools capability. UI now separates installed and ready states and defaults new specialists to Codex. Native Cursor/title integration and browser proof are being completed before packaging.
+
+Checkpoint 4: Full service consultation verified using a synthetic database-migration session and real Codex subscription login. Completed in 5.6 seconds with two supplied excerpts; answer cited source [2] and correctly distinguished recorded plans from verified production behavior. No private session evidence was sent during this test. Added CI for checks/build/browser tests, native icon, and clean-checkout type generation.
+
+Checkpoint 5: All 7 browser tests passed, including axe WCAG checks in desktop dark/light and mobile, theme persistence, reduced-motion loading, and 320px reflow at 200% text size. Apple Silicon app/DMG/ZIP built and packaged Electron CLI/MCP smoke test passed. Native app initialized an isolated database through its authenticated renderer; unauthenticated library HTTP returned 401; quitting shut down backend and released its port. Native screenshot inspection was unavailable because macOS screen capture failed. Security review subsequently found incomplete Codex tool-feature isolation and detached-child crash cleanup. Final release is being hardened/rebuilt before push. Service/store improvements pass 51 tests: tracked execution shutdown, terminal-run abort, bounded 10-run admission, atomic owners/owner-aware claims, and broader credential redaction.
+
+Checkpoint 6: Native backend now has a parent-connected watchdog. A forced owner SIGKILL test proves the backend and its descendants exit; targeted test and complexity lint pass. Final CLI supervisor verification remains in progress.
+
+Checkpoint 7: Added direct packaged-Electron renderer verification. Synthetic example library, context handoff, token-protected HTTP, screenshot capture, and graceful shutdown pass. Final native crash test will run against the rebuilt watchdog bundle. Full check currently passes 55 tests with typecheck and complexity lint.
+
+Checkpoint 8: Hardened Codex subscription consultation re-verified with synthetic database-migration evidence. Completed in 6.155 seconds; citations linked to supplied source [2], and the answer distinguished recorded plans from verified production behavior.
+
+Checkpoint 9: Frozen source passes typecheck, cyclomatic complexity lint, 57 tests, and all 7 browser workflows/accessibility checks. Live Codex safety probe could neither read a separate synthetic file nor create a test file. Rebuilding final Apple Silicon installers and checking packaged startup/crash cleanup before commit/push.
+
+Checkpoint 10: Final packaged CLI subscription consultation passes (9.97 seconds), and native graceful/forced-crash shutdown passes. Signature verification then exposed Next runtime cache writes inside signed resources. Disabled filesystem ISR cache writes through Next configuration and added a runtime-resource digest regression to native smoke; typecheck and complexity lint pass. Rebuilding to verify signature stability after use.
+
+Final verification: typecheck and complexity lint pass; 57 tests and 7 browser checks pass; live source and packaged Codex subscription answers pass with synthetic evidence; packaged CLI/MCP and actual native renderer checks pass. Forced main-process crash releases the backend; runtime resource hashes remain unchanged; deep strict signature verification passes before and after native use. Apple Silicon DMG/ZIP rebuilt. Locally signed, not notarized. Original/private session data and generated releases are excluded from Git. Source is ready for the authorized commit/push; Git history records publication.

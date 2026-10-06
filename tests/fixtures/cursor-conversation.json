@@ -1,0 +1,9 @@
+{
+  "conversationId": "cursor-demo-1",
+  "title": "Cursor import",
+  "messages": [
+    {"role": "user", "content": "Find the invariant."},
+    {"role": "assistant", "content": "Keep hidden tool activity out of the library."},
+    {"role": "tool", "content": "ignored tool output"}
+  ]
+}

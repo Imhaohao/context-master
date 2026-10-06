@@ -1,0 +1,12 @@
+{
+  "conversation_id": "chatgpt-demo-1",
+  "title": "Branch-safe import",
+  "create_time": 1791316860,
+  "current_node": "assistant-final",
+  "mapping": {
+    "root": {"id": "root", "parent": null, "children": ["user-1"], "message": null},
+    "user-1": {"id": "user-1", "parent": "root", "children": ["assistant-branch", "assistant-final"], "message": {"author": {"role": "user"}, "create_time": 1791316861, "content": {"content_type": "text", "parts": ["Use the selected branch."]}}},
+    "assistant-branch": {"id": "assistant-branch", "parent": "user-1", "children": [], "message": {"author": {"role": "assistant"}, "content": {"content_type": "text", "parts": ["Alternate branch must stay out."]}}},
+    "assistant-final": {"id": "assistant-final", "parent": "user-1", "children": [], "message": {"author": {"role": "assistant"}, "content": {"content_type": "text", "parts": ["Selected branch is imported."]}}}
+  }
+}
