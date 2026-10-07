@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { X, SpinnerGap, Check } from '@phosphor-icons/react';
 export function Button({ children, variant = 'secondary', busy = false, className = '', ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'ghost' | 'danger'; busy?: boolean }) {
   return <button {...props} disabled={props.disabled || busy} className={`button button-${variant} ${className}`} aria-busy={busy || undefined}>
@@ -11,13 +11,14 @@ export function IconButton({ label, children, ...props }: ButtonHTMLAttributes<H
 }
 export function Dialog({ title, children, onClose, wide = false }: { title: string; children: ReactNode; onClose: () => void; wide?: boolean }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
   useEffect(() => {
     const dialog = ref.current; const previous = document.activeElement as HTMLElement | null;
     dialog?.showModal();
     return () => { dialog?.close(); previous?.focus(); };
   }, []);
-  return <dialog ref={ref} className={`modal ${wide ? 'modal-wide' : ''}`} onCancel={event => { event.preventDefault(); onClose(); }} onClick={event => { if (event.target === event.currentTarget) onClose(); }} aria-labelledby="dialog-title">
-    <div className="modal-heading"><h2 id="dialog-title">{title}</h2><IconButton label={`Close ${title}`} onClick={onClose}><X size={20} aria-hidden="true" /></IconButton></div>
+  return <dialog ref={ref} className={`modal ${wide ? 'modal-wide' : ''}`} onCancel={event => { event.preventDefault(); onClose(); }} onClick={event => { if (event.target === event.currentTarget) onClose(); }} aria-labelledby={titleId}>
+    <div className="modal-heading"><h2 id={titleId}>{title}</h2><IconButton label={`Close ${title}`} onClick={onClose}><X size={20} aria-hidden="true" /></IconButton></div>
     {children}
   </dialog>;
 }

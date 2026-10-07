@@ -20,8 +20,11 @@ async function main() {
     const response = await fetch(url);
     if (response.status !== 401) throw new Error('The packaged backend allowed an unauthenticated library request.');
     await page.getByRole('button', { name: 'Try the example library' }).click();
+    await page.getByRole('button', { name: 'Dismiss notification' }).click();
     await page.getByRole('button', { name: 'Read saved context' }).click();
     await expect(page.locator('.network-map')).toBeVisible();
+    const families = await page.locator('.app-shell').evaluate(element => [...new Set(Array.from(element.querySelectorAll('*')).filter(child => child instanceof HTMLElement).map(child => getComputedStyle(child).fontFamily))]);
+    if (families.some(family => !family.includes('IBM Plex Sans'))) throw new Error('The packaged interface uses an unexpected font family.');
     const artifacts = resolve('test-results/native');
     await mkdir(artifacts, { recursive: true });
     await page.screenshot({ path: join(artifacts, 'context-master.png') });

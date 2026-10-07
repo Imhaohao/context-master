@@ -7,7 +7,7 @@ import type { AgentCli } from '@/core/types';
 interface Settings { clis: { id: AgentCli; name: string; installed: boolean; ready: boolean; path?: string; version?: string; detail?: string }[]; dataDirectory: string; mcp: { command: string; args: string[]; env: Record<string, string> } }
 export function ConnectionsPanel() {
   const [settings, setSettings] = useState<Settings | null>(null); const [error, setError] = useState(''); const [copied, setCopied] = useState(false); const [busy, setBusy] = useState(false);
-  async function refresh() { setBusy(true); setError(''); try { setSettings(await api<Settings>('/api/settings')); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not inspect local agents.'); } finally { setBusy(false); } }
+  async function refresh() { setBusy(true); setError(''); setCopied(false); try { setSettings(await api<Settings>('/api/settings')); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not inspect local agents.'); } finally { setBusy(false); } }
   useEffect(() => { let live = true; api<Settings>('/api/settings').then(data => { if (live) setSettings(data); }).catch(cause => { if (live) setError(cause.message); }); return () => { live = false; }; }, []);
   const config = settings ? JSON.stringify({ mcpServers: { 'context-master': settings.mcp } }, null, 2) : '';
   async function copy() { try { await navigator.clipboard.writeText(config); setCopied(true); } catch { setError('Could not copy. Select the configuration below and copy it manually.'); } }
