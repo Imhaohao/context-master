@@ -26,9 +26,9 @@ export function NetworkMap({ specialist, sessions, onSession }: { specialist: Sp
     <div className="network-map" role="group" aria-label={`${linked.length} source sessions feed ${specialist.name}`}>
       <div className="context-inputs network-sources">{shown.map(session => <button key={session.id} onClick={() => onSession(session.id)} title={session.title}><Stack aria-hidden="true" size={18} /><span>{session.title}</span><ArrowRight aria-hidden="true" size={14} /></button>)}</div>
       <div className="network-routing"><ConvergingPaths count={shown.length} /></div>
-      <div className="network-specialist"><ContextMark size={40} /><span>Saved brief</span><span className="network-caption">Revision {specialist.revision}</span></div>
+      <div className="network-specialist"><ContextMark size={40} /><span>Brief</span><span className="network-caption">Revision {specialist.revision}</span></div>
     </div>
-    {linked.length > shown.length && <p className="field-hint">Showing {shown.length} of {linked.length} linked sessions. Browse sources to see all of them.</p>}
+    {linked.length > shown.length && <p className="field-hint">Showing {shown.length} of {linked.length} linked sessions. Open Sources to see all of them.</p>}
   </div>;
 }
 

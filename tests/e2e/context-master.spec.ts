@@ -144,7 +144,7 @@ test('rejects foreign origins and malformed imports at the local API boundary', 
 
 test('imports a synthetic session, creates and consults a specialist, edits versions, restores it, and detects duplicates', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Build your specialist library' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ask your past work' })).toBeVisible();
 
   const { dialog: escapedDialog, trigger: importTrigger } = await openImportDialog(page);
   await page.keyboard.press('Escape');
@@ -160,19 +160,48 @@ test('imports a synthetic session, creates and consults a specialist, edits vers
   await editor.getByLabel('Name').fill('Synthetic desktop specialist');
   await editor.getByLabel('Specialist scope').fill('Answer questions about safe desktop harness behavior and evidence-linked context handoffs.');
   await editor.locator('textarea.brief-editor').fill('The synthetic harness keeps imported sessions read-only, returns bounded context, and links claims to source messages.');
-  await editor.getByLabel('Tags').fill('desktop, evidence');
+  const editorOptions = editor.locator('details.editor-options');
+  await editorOptions.locator('summary').click();
+  await editorOptions.getByLabel('Tags').fill('desktop, evidence');
   await editor.getByRole('button', { name: 'Create specialist' }).click();
   await expect(editor).toBeHidden();
   await expect(page.getByRole('heading', { name: 'Synthetic desktop specialist', level: 2 })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Read saved context' }).click();
-  await expect(page.getByText(/characters saved/)).toBeVisible();
+  await page.getByRole('button', { name: 'Activity', exact: true }).click();
+  await expect(page.getByText('No consultations yet')).toBeVisible();
+  await page.getByRole('button', { name: 'Ask a specialist', exact: true }).click();
+  await expect(page.getByLabel('Your question')).toBeVisible();
+
+  const connectionRail = page.getByRole('button', { name: 'Connections', exact: true });
+  await page.getByRole('button', { name: 'Activity', exact: true }).focus();
+  await page.keyboard.press('Tab');
+  await expect(connectionRail).toBeFocused();
+  await expect(connectionRail.locator('.control-tooltip')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(connectionRail.locator('.control-tooltip')).toBeHidden();
+  const askTab = page.getByRole('tab', { name: 'Ask', exact: true });
+  const briefTab = page.getByRole('tab', { name: 'Brief', exact: true });
+  const sourcesTab = page.getByRole('tab', { name: 'Sources', exact: true });
+  await askTab.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(briefTab).toBeFocused();
+  await page.keyboard.press('ArrowRight');
+  await expect(sourcesTab).toBeFocused();
+  await page.keyboard.press('Home');
+  await expect(askTab).toBeFocused();
+  const draftQuestion = page.getByLabel('Your question');
+  await draftQuestion.fill('Keep this question while I inspect the brief.');
+  await briefTab.click();
+  await expect(page.locator('.brief-text')).toContainText('The synthetic harness keeps imported sessions read-only');
+  await askTab.click();
+  await expect(draftQuestion).toHaveValue('Keep this question while I inspect the brief.');
   await page.screenshot({ path: path.join(TEST_ARTIFACT_DIRECTORY, 'synthetic-demo-library.png'), fullPage: true });
 
-  await page.getByRole('button', { name: 'Ask specialist' }).click();
-  await page.getByLabel('Consultation mode').selectOption('context');
+  const mode = page.getByLabel('Consultation mode');
+  await expect(mode.locator('option')).toHaveText(['Answer', 'Handoff']);
+  await mode.selectOption('context');
   await page.getByLabel('Your question').fill('What did the synthetic harness decide about cancellation, evidence, and context-only handoffs?');
-  await page.getByRole('button', { name: 'Get context' }).click();
+  await page.getByRole('button', { name: 'Handoff', exact: true }).click();
   await expect(page.getByText('Context ready')).toBeVisible();
   await expect(page.locator('.context-answer pre')).toContainText('Synthetic desktop specialist');
   await page.screenshot({ path: path.join(TEST_ARTIFACT_DIRECTORY, 'context-only-consultation.png'), fullPage: true });
@@ -190,8 +219,10 @@ test('imports a synthetic session, creates and consults a specialist, edits vers
   await sourceEditor.getByRole('button', { name: 'Cancel' }).click();
   await expect(sourceEditor).toBeHidden();
 
-  await page.getByRole('button', { name: 'Read saved context' }).click();
-  await page.getByRole('button', { name: 'Edit context' }).click();
+  await page.getByRole('tab', { name: 'Brief', exact: true }).click();
+  await page.locator('details.brief-info > summary').click();
+  await expect(page.locator('details.brief-info')).toContainText('Revision');
+  await page.getByRole('button', { name: 'Edit brief', exact: true }).click();
   const editDialog = page.getByRole('dialog', { name: 'Edit specialist' });
   await expect(editDialog).toBeVisible();
   const originalBrief = await editDialog.locator('textarea.brief-editor').inputValue();
@@ -202,7 +233,9 @@ test('imports a synthetic session, creates and consults a specialist, edits vers
 
   await page.getByRole('button', { name: 'Edit specialist', exact: true }).click();
   const versionsDialog = page.getByRole('dialog', { name: 'Edit specialist' });
-  await versionsDialog.getByRole('button', { name: 'View saved versions' }).click();
+  const editorHistory = versionsDialog.locator('details.editor-history');
+  await editorHistory.locator('summary').click();
+  await editorHistory.getByRole('button', { name: 'View saved versions' }).click();
   await expect(versionsDialog.getByText('Revision 1')).toBeVisible();
   await expect(versionsDialog.getByText('Revision 2')).toBeVisible();
   const firstVersion = versionsDialog.locator('.version-list > div').filter({ hasText: 'Revision 1' });
@@ -215,9 +248,9 @@ test('imports a synthetic session, creates and consults a specialist, edits vers
   await restoredEditor.getByRole('button', { name: 'Cancel' }).click();
 
   await page.getByRole('button', { name: 'Archive', exact: true }).click();
-  await expect(page.getByText('This specialist is archived.')).toBeVisible();
+  await expect(page.locator('.archived-notice')).toContainText('Archived');
   await page.getByRole('button', { name: 'Restore specialist' }).click();
-  await expect(page.getByText('This specialist is archived.')).toBeHidden();
+  await expect(page.locator('.archived-notice')).toBeHidden();
 
   const duplicateResults = await importSyntheticFile(page);
   await expect(duplicateResults.getByText(/0 added, 1 already imported/)).toBeVisible();
@@ -242,7 +275,7 @@ test('persists the selected theme and keeps motion reduced in loading states', a
 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.getByRole('button', { name: 'Specialists' }).click();
-  await page.getByRole('button', { name: 'Read saved context' }).click();
+  await page.getByRole('tab', { name: 'Brief', exact: true }).click();
   await expect(page.locator('.network-map')).toBeVisible();
   await expect.poll(() => page.locator('.network-wire-active').evaluate(element => getComputedStyle(element).animationName)).toBe('none');
 
@@ -268,10 +301,32 @@ test('keeps the workspace usable at 320px and 200% text zoom', async ({ page }) 
   await page.setViewportSize({ height: 720, width: 320 });
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Synthetic desktop specialist', level: 2 })).toBeVisible();
+
+  const pickerToggle = page.getByRole('button', { name: 'Change specialist', exact: true });
+  await expect(pickerToggle).toHaveAttribute('aria-expanded', 'false');
+  const pickerId = await pickerToggle.getAttribute('aria-controls');
+  expect(pickerId).toBeTruthy();
+  const picker = page.locator(`#${pickerId}`);
+  await expect(picker).toBeHidden();
+  await pickerToggle.click();
+  await expect(pickerToggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(picker).toBeVisible();
+  await pickerToggle.click();
+  await expect(pickerToggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(picker).toBeHidden();
+  await pickerToggle.click();
+  await picker.getByRole('button', { name: /Synthetic desktop specialist/ }).click();
+  await expect(pickerToggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(picker).toBeHidden();
+
   await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
   await expectNoHorizontalOverflow(page);
+  const mobileConnections = page.getByRole('button', { name: 'Connections', exact: true });
+  await mobileConnections.focus();
+  await expect(mobileConnections.locator('.nav-touch-label')).toBeVisible();
+  await expect(mobileConnections.locator('.control-tooltip')).toBeHidden();
 
-  await page.locator('button.compact-search').click();
+  await page.locator('button.mobile-search').click();
   const compactSearch = page.getByRole('dialog', { name: 'Find a specialist' });
   await expect(compactSearch).toBeVisible();
   await page.keyboard.press('Escape');
@@ -319,7 +374,7 @@ test('covers keyboard search, list filters, source browsing, and session selecti
   await result.click();
   await expect(search).toBeHidden();
 
-  await page.getByRole('button', { name: 'Read saved context' }).click();
+  await page.getByRole('tab', { name: 'Brief', exact: true }).click();
   const network = page.locator('.network-map');
   await expect(network).toBeVisible();
   const source = network.locator('.network-sources button').first();
@@ -330,16 +385,18 @@ test('covers keyboard search, list filters, source browsing, and session selecti
   await expect(sourceDialog.getByText(/The harness should cancel/)).toBeVisible();
   await sourceDialog.getByRole('button', { name: 'Close Synthetic desktop session' }).click();
 
-  await page.getByRole('button', { name: /Browse sources/ }).click();
+  await page.getByRole('tab', { name: 'Sources', exact: true }).click();
   const linkedSource = page.locator('.linked-source').first();
   await expect(linkedSource).toBeVisible();
   await linkedSource.click();
   await expect(page.getByRole('dialog', { name: 'Synthetic desktop session' })).toBeVisible();
   await page.getByRole('dialog', { name: 'Synthetic desktop session' }).getByRole('button', { name: 'Close Synthetic desktop session' }).click();
 
-  await page.getByRole('button', { name: 'Choose sessions', exact: true }).click();
+  await page.getByRole('button', { name: 'Create', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Sessions', level: 1 })).toBeVisible();
-  await page.getByRole('button', { name: 'Sessions', exact: true }).click();
+  const sessionsRail = page.getByRole('button', { name: 'Sessions', exact: true });
+  await sessionsRail.click();
+  await sessionsRail.press('Escape');
   const sessionCheckbox = page.getByRole('checkbox', { name: 'Select Synthetic desktop session' });
   await sessionCheckbox.check();
   await page.getByRole('button', { name: 'Create from 1 session' }).click();
@@ -428,34 +485,42 @@ test('copies answer and context output and resets copied connection state on ref
   await page.goto('/');
   await page.getByRole('button', { name: 'Connections', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Local agents', level: 2 })).toBeVisible();
-  const guide = page.locator('details.connection-guide');
+  const guide = page.locator('details.connection-guide').filter({ hasText: 'Where to add the configuration' });
   await guide.locator('summary').click();
   await expect(guide.getByRole('link', { name: /Read local server setup/ })).toHaveAttribute('href', 'https://modelcontextprotocol.io/docs/develop/connect-local-servers');
-  await page.getByRole('button', { name: 'Copy configuration' }).click();
-  await expect(page.getByRole('button', { name: 'Copied configuration' })).toBeVisible();
+  const codeBlock = page.locator('details.code-block');
+  await codeBlock.locator('summary').click();
+  await codeBlock.getByRole('button', { name: 'Copy configuration' }).click();
+  await expect(codeBlock.getByRole('button', { name: 'Copied configuration' })).toBeVisible();
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toContain('context-master');
   await page.getByRole('button', { name: 'Check again' }).click();
-  await expect(page.getByRole('button', { name: 'Copy configuration' })).toBeVisible();
+  await expect(codeBlock.getByRole('button', { name: 'Copy configuration' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Specialists', exact: true }).click();
-  await page.getByRole('group', { name: 'Specialist views' }).getByRole('button', { name: 'Ask specialist', exact: true }).click();
+  await page.getByRole('tab', { name: 'Ask', exact: true }).click();
   const question = page.getByLabel('Your question');
-  await question.fill('What decisions were made in the fixture?');
+  const rtlQuestion = 'מה החלטנו בפרויקט הזה?';
+  await question.fill(rtlQuestion);
   const composer = page.locator('form.composer');
-  await composer.getByRole('button', { name: 'Ask specialist', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Copy answer' })).toBeVisible();
-  await page.getByRole('button', { name: 'Copy answer' }).click();
+  await composer.getByRole('button', { name: 'Ask', exact: true }).click();
+  const questionBubble = page.locator('.question-bubble p');
+  await expect(questionBubble).toHaveText(rtlQuestion);
+  await expect.poll(() => questionBubble.evaluate(element => getComputedStyle(element).direction)).toBe('rtl');
+  await expect(page.getByRole('button', { name: 'Copy answer', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Copy answer', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible();
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe('Answer fixture');
 
   await page.getByLabel('Consultation mode').selectOption('context');
   await question.fill('Return the fixture context packet.');
-  await composer.getByRole('button', { name: 'Get context', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Copy context handoff' })).toBeVisible();
-  await page.getByRole('button', { name: 'Copy context handoff' }).click();
+  await composer.getByRole('button', { name: 'Handoff', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Copy context handoff', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Copy context handoff', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible();
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe('Context handoff fixture');
-  await page.getByRole('button', { name: 'Activity', exact: true }).click();
+  const activityRail = page.getByRole('button', { name: 'Activity', exact: true });
+  await activityRail.click();
+  await activityRail.press('Escape');
   const activity = page.locator('.activity-row').first();
   await expect(activity).toBeVisible();
   await activity.click();
@@ -498,20 +563,20 @@ test('focuses suggested questions and handles stop and provider failure fixtures
   await page.goto('/');
   await page.getByPlaceholder('Filter specialists').fill('Fixture consultation');
   await page.getByRole('button', { name: /Fixture consultation specialist/ }).click();
-  await page.getByRole('group', { name: 'Specialist views' }).getByRole('button', { name: 'Ask specialist', exact: true }).click();
+  await page.getByRole('tab', { name: 'Ask', exact: true }).click();
   const question = page.getByLabel('Your question');
   const suggested = page.getByRole('button', { name: /Ask about decisions and open questions/ });
   await suggested.click();
   await expect(question).toHaveValue('What decisions were made, and what still needs verification?');
   await expect(question).toBeFocused();
   const composer = page.locator('form.composer');
-  await composer.getByRole('button', { name: 'Ask specialist', exact: true }).click();
+  await composer.getByRole('button', { name: 'Ask', exact: true }).click();
   await expect(composer.getByRole('button', { name: 'Stop run', exact: true })).toBeVisible();
   await composer.getByRole('button', { name: 'Stop run', exact: true }).click();
   await expect(page.getByText('This consultation was stopped.')).toBeVisible();
 
   await question.fill('Trigger the deterministic provider failure.');
-  await composer.getByRole('button', { name: 'Ask specialist', exact: true }).click();
+  await composer.getByRole('button', { name: 'Ask', exact: true }).click();
   await expect(page.locator('p.error-notice')).toContainText('Fixture provider failed without invoking a paid API.');
   await page.unroute('**/api/consultations');
   await page.unroute('**/api/consultations/**');
@@ -521,7 +586,7 @@ test('supports protected deletion, selection-based drafting, and successful orph
   await page.goto('/');
   await page.getByPlaceholder('Filter specialists').fill('Synthetic desktop');
   await page.locator('.specialist-row').filter({ hasText: 'Synthetic desktop specialist' }).click();
-  await page.getByRole('button', { name: 'Read saved context' }).click();
+  await page.getByRole('tab', { name: 'Brief', exact: true }).click();
   await page.locator('.network-sources button').first().click();
   const protectedDialog = page.getByRole('dialog', { name: 'Synthetic desktop session' });
   await protectedDialog.getByRole('button', { name: 'Delete imported copy' }).click();
@@ -535,7 +600,9 @@ test('supports protected deletion, selection-based drafting, and successful orph
   const importResponse = await page.request.post('/api/import', { data: { files: [{ name: 'orphan-session-for-deletion.json', text: ORPHAN_SESSION }] } });
   expect(importResponse.ok()).toBeTruthy();
   await page.reload();
-  await page.getByRole('button', { name: 'Sessions', exact: true }).click();
+  const sessionsRail = page.getByRole('button', { name: 'Sessions', exact: true });
+  await sessionsRail.click();
+  await sessionsRail.press('Escape');
   const orphanCheckbox = page.getByRole('checkbox', { name: 'Select Orphan session for deletion' });
   await orphanCheckbox.check();
   await page.getByRole('button', { name: 'Create from 1 session' }).click();

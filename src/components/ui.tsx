@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useId, useRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { X, SpinnerGap, Check } from '@phosphor-icons/react';
 export function Button({ children, variant = 'secondary', busy = false, className = '', ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'ghost' | 'danger'; busy?: boolean }) {
   return <button {...props} disabled={props.disabled || busy} className={`button button-${variant} ${className}`} aria-busy={busy || undefined}>
@@ -7,7 +7,8 @@ export function Button({ children, variant = 'secondary', busy = false, classNam
   </button>;
 }
 export function IconButton({ label, children, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) {
-  return <button {...props} className={`icon-button ${props.className ?? ''}`} aria-label={label} title={label}>{children}</button>;
+  const [dismissed, setDismissed] = useState(false);
+  return <button {...props} className={`icon-button ${props.className ?? ''}`} aria-label={label} data-tooltip-hidden={dismissed || undefined} onPointerEnter={event => { setDismissed(false); props.onPointerEnter?.(event); }} onFocus={event => { setDismissed(false); props.onFocus?.(event); }} onKeyDown={event => { if (event.key === 'Escape') setDismissed(true); props.onKeyDown?.(event); }}>{children}<span className="control-tooltip" aria-hidden="true">{label}</span></button>;
 }
 export function Dialog({ title, children, onClose, wide = false }: { title: string; children: ReactNode; onClose: () => void; wide?: boolean }) {
   const ref = useRef<HTMLDialogElement>(null);

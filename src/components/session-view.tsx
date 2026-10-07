@@ -20,7 +20,7 @@ export function SessionView({ sessionId, highlight, onClose, onCreate, onDeleted
   return <Dialog title={session?.title ?? 'Saved session'} onClose={onClose} wide>
     <div className="modal-body stack">
       {session && <><div className="session-facts"><Badge>{sourceNames[session.source]}</Badge><span>{counted(session.messageCount, 'message')}</span><span>{session.characterCount.toLocaleString()} characters</span></div>{session.project && <p className="muted break-word">{session.project}</p>}
-        <div className="transcript">{session.messages.map(message => <article id={`message-${message.ordinal}`} className={`transcript-message ${message.role === 'assistant' ? 'assistant-message' : ''} ${highlight === message.ordinal ? 'highlight-message' : ''}`} key={message.id}><div className="message-speaker"><ChatCircle size={16} aria-hidden="true" />{message.role === 'assistant' ? sourceNames[session.source] : 'You'}<span className="muted">Message {message.ordinal + 1}</span></div><p>{message.text}</p></article>)}</div>
+        <div className="transcript">{session.messages.map(message => <article id={`message-${message.ordinal}`} className={`transcript-message ${message.role === 'assistant' ? 'assistant-message' : ''} ${highlight === message.ordinal ? 'highlight-message' : ''}`} key={message.id}><div className="message-speaker"><ChatCircle size={16} aria-hidden="true" />{message.role === 'assistant' ? sourceNames[session.source] : 'You'}<span className="muted">Message {message.ordinal + 1}</span></div><p dir="auto">{message.text}</p></article>)}</div>
       </>}
       {!session && !error && <p role="status">Loading the saved transcript…</p>}
       {error && <ErrorNotice message={error} />}

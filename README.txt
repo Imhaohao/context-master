@@ -26,10 +26,10 @@ Build a Mac app
   npm run desktop:smoke:native verifies the actual Mac renderer, token protection, context handoff, shutdown, forced-crash cleanup, and immutable bundle resources.
 
 Use the app
-  Import sessions opens native discovery. Select only the chats you want to keep, or choose transcript files.
+  Import opens native discovery. Select only the chats you want to keep, or choose transcript files.
   Create a specialist, inspect the extracted brief, choose its answering CLI, and save it.
-  Ask specialist runs a fresh isolated CLI process. Get context only returns the same bounded evidence packet without a model call.
-  Browse sources opens exact imported messages. Edit context keeps revision history. Archive removes a specialist from search and can be reversed.
+  Ask runs a fresh isolated CLI process. Handoff returns the bounded brief and evidence packet without a model call.
+  Sources links to exact imported messages. Brief shows the saved context and provenance; Edit brief keeps revision history. Archive can be reversed.
   Connections provides the MCP configuration for another agent.
 
 Import support
