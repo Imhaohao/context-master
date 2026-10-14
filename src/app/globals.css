@@ -260,6 +260,7 @@
   .path-text { @apply mt-2 block text-xs text-muted; overflow-wrap: anywhere; }
   .code-block { @apply mt-5 rounded-panel bg-surface p-5; box-shadow: var(--shadow-panel); }
   .code-block .button { @apply mt-4 -ms-3; }
+  .code-block h3 { @apply mb-3 text-base; }
   .connection-guide { @apply mt-4; }
   .connection-guide a { @apply inline-flex items-center gap-2 text-sm; }
   .modal { @apply fixed m-auto max-w-[calc(100%-2rem)] overflow-hidden rounded-dialog bg-surface p-0 text-ink; width: 560px; max-height: calc(100dvh - 3rem); border: 0; box-shadow: var(--shadow-dialog); }

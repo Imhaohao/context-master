@@ -2,11 +2,13 @@ import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync, chmodSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-export function dataDirectory(): string {
-  if (process.env.CONTEXT_MASTER_DATA_DIR) return process.env.CONTEXT_MASTER_DATA_DIR;
+export function defaultDataDirectory(): string {
   return process.platform === 'darwin'
     ? join(homedir(), 'Library', 'Application Support', 'Context Master')
     : join(homedir(), '.local', 'share', 'context-master');
+}
+export function dataDirectory(): string {
+  return process.env.CONTEXT_MASTER_DATA_DIR || defaultDataDirectory();
 }
 export function openDatabase(path?: string): DatabaseSync {
   let filename = path;
