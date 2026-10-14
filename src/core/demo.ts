@@ -1,5 +1,6 @@
 import type { LibraryStore } from './store';
 import { draftBrief } from './context';
+import type { AgentCli } from './types';
 const examples = [
   {
     title: 'Database migrations', project: 'Example: Atlas', source: 'claude',
@@ -22,13 +23,13 @@ const examples = [
     answer: 'Search each specialist’s name, scope, tags, and linked source messages. Use the score only to rank lexical matches; do not display it as a probability that the specialist is correct. Send a bounded brief and a small evidence bundle. Every excerpt should link back to an exact source message. Offer a context-only handoff when the caller wants to reason itself. Saved notes can be outdated, so the answering specialist should say when it lacks current evidence. Compression saves space but can omit useful details; let the person inspect and edit the brief.'
   }
 ];
-export function loadExamples(store: LibraryStore) {
+export function loadExamples(store: LibraryStore, cli: AgentCli) {
   return examples.map(example => {
     const imported = store.import(JSON.stringify({ ...example, messages: [{ role: 'user', content: example.goal }, { role: 'assistant', content: example.answer }] }), `${example.title}.json`);
     const session = imported.sessions[0];
     const existing = store.specialists().find(specialist => specialist.sessionIds.includes(session.id));
     if (existing) return existing;
     const draft = draftBrief([store.session(session.id)]);
-    return store.createSpecialist({ ...draft, name: example.title, description: example.goal, tags: ['example', ...draft.tags], cli: 'codex', sessionIds: [session.id] });
+    return store.createSpecialist({ ...draft, name: example.title, description: example.goal, tags: ['example', ...draft.tags], cli, sessionIds: [session.id] });
   });
 }

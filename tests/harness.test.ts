@@ -42,7 +42,6 @@ beforeEach(async () => {
     createFakeCli("claude", "Claude Code fake 1.0"),
     createFakeCli("codex", "Codex fake 1.0"),
     createFakeCli("opencode", "OpenCode fake 1.0"),
-    createFakeCli("agent", "Cursor Agent fake 1.0"),
   ]);
   process.env.PATH = `${fakeBin}${delimiter}${originalPath}`;
 });
@@ -70,11 +69,9 @@ afterEach(async () => {
 describe("specialist CLI harness", () => {
   it("discovers installed CLIs and verifies their advertised safety flags", async () => {
     const statuses = await getCliStatuses();
-    expect(statuses.map(({ id }) => id)).toEqual(["claude", "codex", "opencode", "cursor"]);
+    expect(statuses.map(({ id }) => id)).toEqual(["claude", "codex", "opencode"]);
     expect(statuses.filter(({ id }) => id === "claude" || id === "codex").every(({ installed, detail }) => installed && detail?.includes("subscription auth verified"))).toBe(true);
     expect(statuses.filter(({ id }) => id === "claude" || id === "codex" || id === "opencode").every(({ ready }) => ready)).toBe(true);
-    expect(statuses.find(({ id }) => id === "cursor")).toMatchObject({ installed: true, ready: false });
-    expect(statuses.find(({ id }) => id === "cursor")?.detail).toContain("Unsupported for no-tool specialists");
   });
 
   it("marks an installed CLI as blocked when only API credentials are available", async () => {
@@ -163,10 +160,6 @@ describe("specialist CLI harness", () => {
     expect(childEnvironment.AWS_SECRET_ACCESS_KEY).toBeUndefined();
     expect(childEnvironment.NODE_OPTIONS).toBeUndefined();
     expect(childEnvironment.CODEX_HOME).toBe(process.env.CODEX_HOME);
-  });
-
-  it("refuses Cursor because ask mode cannot deny every read/search tool", async () => {
-    await expect(runSpecialist({ cli: "cursor", prompt: "unsupported" })).rejects.toThrow(/read\/search tools/);
   });
 
   it("refuses OpenCode when credentials only identify an API provider", async () => {
@@ -294,7 +287,6 @@ if (args.includes("--version")) { console.log(${JSON.stringify(version)}); proce
 if (${JSON.stringify(name)} === "claude" && args[0] === "auth") { console.log(JSON.stringify({ loggedIn: true, authMethod: "claude.ai", apiProvider: "firstParty", subscriptionType: "max" })); process.exit(0); }
 if (${JSON.stringify(name)} === "codex" && args[0] === "login") { console.log("Logged in using ChatGPT"); process.exit(0); }
 if (${JSON.stringify(name)} === "opencode" && args[0] === "auth") { console.log(process.env.HARNESS_API_ONLY ? "Credentials\\n● OpenRouter api" : "Credentials\\n● ChatGPT oauth"); process.exit(0); }
-if (${JSON.stringify(name)} === "agent" && args[0] === "status") { console.log(JSON.stringify({ isAuthenticated: true, authMethod: "subscription" })); process.exit(0); }
 if (${JSON.stringify(name)} === "codex" && args[0] === "features") {
   const inventory = process.env.HARNESS_FEATURES_MODE === "malformed" ? "not a feature inventory" : process.env.HARNESS_FEATURES_MODE === "insufficient" ? "shell_tool stable true" : ${JSON.stringify(CODEX_FEATURE_INVENTORY)};
   console.log(inventory);

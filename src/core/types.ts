@@ -1,5 +1,5 @@
 export type Source = 'codex' | 'claude' | 'opencode' | 'cursor' | 'chatgpt' | 'generic';
-export type AgentCli = 'claude' | 'codex' | 'opencode' | 'cursor';
+export type AgentCli = 'claude' | 'codex' | 'opencode';
 export interface Message { id: string; sessionId: string; ordinal: number; role: 'user' | 'assistant'; text: string; timestamp: string | null }
 export interface Session {
   id: string; externalId: string | null; title: string; source: Source; project: string | null;

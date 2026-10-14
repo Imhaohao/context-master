@@ -3,11 +3,11 @@ import { useState } from 'react';
 import { ArrowRight, FloppyDisk, ClockCounterClockwise } from '@phosphor-icons/react';
 import type { Session, Specialist } from '@/core/types';
 import { api, Badge, Button, Dialog, ErrorNotice, Field, requestBody, sourceNames } from './ui';
-interface Draft { name: string; description: string; brief: string; tags: string[] }
+interface Draft { name: string; description: string; brief: string; tags: string[]; cli?: Specialist['cli'] }
 export function SpecialistEditor({ initial, sessionIds, sessions, specialist, onClose, onSaved }: { initial: Draft; sessionIds: string[]; sessions: Session[]; specialist?: Specialist; onClose: () => void; onSaved: (specialist: Specialist) => void }) {
   const [name, setName] = useState(initial.name); const [description, setDescription] = useState(initial.description);
   const [brief, setBrief] = useState(initial.brief); const [tags, setTags] = useState(initial.tags.join(', '));
-  const [cli, setCli] = useState(specialist?.cli ?? 'codex'); const [selected, setSelected] = useState(new Set(sessionIds));
+  const [cli, setCli] = useState(specialist?.cli ?? initial.cli ?? 'claude'); const [selected, setSelected] = useState(new Set(sessionIds));
   const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [versions, setVersions] = useState<Specialist[] | null>(null);
   async function save(event: React.FormEvent) {
     event.preventDefault(); setBusy(true); setError('');
@@ -27,7 +27,7 @@ export function SpecialistEditor({ initial, sessionIds, sessions, specialist, on
   return <Dialog title={specialist ? 'Edit specialist' : 'Create a specialist'} onClose={onClose} wide>
     <form onSubmit={save}>
       <div className="modal-body stack">
-        <div className="form-grid"><Field label="Name"><input value={name} onChange={event => setName(event.target.value)} maxLength={100} required autoFocus /></Field><Field label="Answer with"><select value={cli} onChange={event => setCli(event.target.value as Specialist['cli'])}>{['claude', 'codex', 'opencode', 'cursor'].map(value => <option key={value} value={value}>{sourceNames[value]}</option>)}</select></Field></div>
+        <div className="form-grid"><Field label="Name"><input value={name} onChange={event => setName(event.target.value)} maxLength={100} required autoFocus /></Field><Field label="Answer with"><select value={cli} onChange={event => setCli(event.target.value as Specialist['cli'])}>{['claude', 'codex', 'opencode'].map(value => <option key={value} value={value}>{sourceNames[value]}</option>)}</select></Field></div>
         <Field label="Specialist scope" hint="Describe the questions this specialist is equipped to answer."><textarea value={description} onChange={event => setDescription(event.target.value)} maxLength={600} rows={2} /></Field>
         <Field label="Saved context" hint="This draft preserves source excerpts. Edit it to keep the decisions and limitations that matter."><textarea className="brief-editor" value={brief} onChange={event => setBrief(event.target.value)} maxLength={12000} rows={10} required /></Field>
         <div className="editor-budget"><span>{brief.length.toLocaleString()} / 12,000 characters</span><span>About {Math.ceil(brief.length / 4).toLocaleString()} tokens, estimated</span></div>

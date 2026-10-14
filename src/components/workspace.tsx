@@ -11,7 +11,7 @@ import { ConnectionsPanel } from './connections';
 import { ConsultationPanel } from './consultation';
 import { LibraryIllustration, NetworkMap } from './network-map';
 type View = 'specialists' | 'sessions' | 'activity' | 'connections';
-type Draft = Pick<Specialist, 'name' | 'description' | 'brief' | 'tags'>;
+type Draft = Pick<Specialist, 'name' | 'description' | 'brief' | 'tags'> & { cli?: Specialist['cli'] };
 interface EditorState { initial: Draft; sessionIds: string[]; specialist?: Specialist }
 const views: { id: View; label: string; icon: typeof Graph }[] = [
   { id: 'specialists', label: 'Specialists', icon: Graph }, { id: 'sessions', label: 'Sessions', icon: Stack },

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 export const sourceSchema = z.enum(['codex', 'claude', 'opencode', 'cursor', 'chatgpt', 'generic']);
-export const cliSchema = z.enum(['claude', 'codex', 'opencode', 'cursor']);
+export const cliSchema = z.enum(['claude', 'codex', 'opencode']);
 export const specialistInput = z.object({
   name: z.string().trim().min(1).max(100), description: z.string().trim().max(600),
   brief: z.string().trim().min(1).max(12000), tags: z.array(z.string().trim().min(1).max(40)).max(12),

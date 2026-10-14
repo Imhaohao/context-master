@@ -4,7 +4,7 @@ import { access, mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
 
-export type AgentCli = "claude" | "codex" | "opencode" | "cursor";
+export type AgentCli = "claude" | "codex" | "opencode";
 
 export interface CliStatus {
   id: AgentCli;
@@ -71,8 +71,6 @@ interface CliAdapter {
   subscriptionCommand: string[];
   requiredCapabilities: RegExp[];
   safetySummary: string;
-  runSupported: boolean;
-  unsupportedDetail?: string;
 }
 
 interface ProcessOptions {
@@ -245,7 +243,6 @@ const ADAPTERS: Record<AgentCli, CliAdapter> = {
       /--no-session-persistence/u,
     ],
     safetySummary: "tools disabled, safe mode, strict MCP config, and no session persistence",
-    runSupported: true,
   },
   codex: {
     id: "codex",
@@ -262,7 +259,6 @@ const ADAPTERS: Record<AgentCli, CliAdapter> = {
       /--ephemeral/u,
     ],
     safetySummary: "all advertised tools disabled, web search disabled, read-only sandbox, ignored user config/rules, and ephemeral session",
-    runSupported: true,
   },
   opencode: {
     id: "opencode",
@@ -276,28 +272,10 @@ const ADAPTERS: Record<AgentCli, CliAdapter> = {
       /--prompt/u,
     ],
     safetySummary: "pure mode and deny-all tool permissions in an isolated config",
-    runSupported: true,
-  },
-  cursor: {
-    id: "cursor",
-    name: "Cursor Agent",
-    candidates: ["agent", "cursor-agent", "cursor"],
-    capabilityCommands: [["--help"]],
-    subscriptionCommand: ["status", "--format", "json"],
-    requiredCapabilities: [
-      /--mode\s+<mode>/u,
-      /\bask\b/u,
-      /--output-format\s+<format>/u,
-      /-p,\s+--print/u,
-      /--sandbox\s+<mode>/u,
-    ],
-    safetySummary: "ask mode and enabled sandbox in an isolated workspace",
-    runSupported: false,
-    unsupportedDetail: "Cursor ask mode still exposes read/search tools and has no CLI deny-all switch",
   },
 };
 
-const ADAPTER_ORDER: AgentCli[] = ["claude", "codex", "opencode", "cursor"];
+const ADAPTER_ORDER: AgentCli[] = ["claude", "codex", "opencode"];
 
 /**
  * Run a specialist in a fresh temporary directory with tool access disabled.
@@ -315,9 +293,6 @@ export async function runSpecialist(input: SpecialistInput): Promise<SpecialistR
   ]);
   if (!capabilityCheck.ok) {
     throw new Error(`Cannot safely run ${adapter.name}: ${capabilityCheck.detail}`);
-  }
-  if (!adapter.runSupported) {
-    throw new Error(`Cannot safely run ${adapter.name}: ${adapter.unsupportedDetail ?? "no-tool execution is unavailable"}`);
   }
   if (!subscriptionCheck.ok) {
     throw new Error(`Cannot safely run ${adapter.name}: subscription auth is not verified (${subscriptionCheck.detail})`);
@@ -359,6 +334,12 @@ export async function getCliStatuses(): Promise<CliStatus[]> {
   return Promise.all(ADAPTER_ORDER.map((id) => getCliStatus(ADAPTERS[id])));
 }
 
+/** The first CLI whose safety flags and subscription login are both verified. */
+export async function preferredCli(): Promise<AgentCli> {
+  const ready = (await getCliStatuses()).find((status) => status.ready);
+  return ready?.id ?? "claude";
+}
+
 async function getCliStatus(adapter: CliAdapter): Promise<CliStatus> {
   const executable = await findExecutable(adapter.candidates);
   if (!executable) {
@@ -376,7 +357,7 @@ async function getCliStatus(adapter: CliAdapter): Promise<CliStatus> {
     installed: true,
     name: adapter.name,
     path: executable.path,
-    ready: adapter.runSupported && capabilityCheck.ok && subscriptionCheck.ok,
+    ready: capabilityCheck.ok && subscriptionCheck.ok,
   };
   if (version) status.version = version;
   status.detail = formatStatusDetail(adapter, capabilityCheck, subscriptionCheck);
@@ -389,8 +370,7 @@ function formatStatusDetail(
   subscriptionCheck: { ok: true } | { ok: false; detail: string },
 ): string {
   const details: string[] = [];
-  if (!adapter.runSupported) details.push(`Unsupported for no-tool specialists: ${adapter.unsupportedDetail ?? adapter.safetySummary}`);
-  else if (capabilityCheck.ok) details.push(`Safety ready: ${adapter.safetySummary}`);
+  if (capabilityCheck.ok) details.push(`Safety ready: ${adapter.safetySummary}`);
   else details.push(`Safety guard unavailable: ${capabilityCheck.detail}`);
   if (subscriptionCheck.ok) details.push("subscription auth verified");
   else details.push(`subscription auth unverified: ${subscriptionCheck.detail}`);
@@ -429,7 +409,7 @@ async function inspectCapabilities(
   executable: ResolvedExecutable,
 ): Promise<CapabilityCheck> {
   const probes = await Promise.all(
-    adapter.capabilityCommands.map((args) => probeProcess(executable, prefixArguments(executable, args), PROBE_TIMEOUT_MS)),
+    adapter.capabilityCommands.map((args) => probeProcess(executable, args, PROBE_TIMEOUT_MS)),
   );
   const helpText = probes.map((probe) => `${probe.stdout}\n${probe.stderr}`).join("\n");
   const missing = adapter.requiredCapabilities.filter((capability) => !capability.test(helpText));
@@ -486,7 +466,7 @@ async function inspectSubscription(
 ): Promise<{ ok: true } | { ok: false; detail: string }> {
   const probe = await probeProcess(
     executable,
-    prefixArguments(executable, adapter.subscriptionCommand),
+    adapter.subscriptionCommand,
     PROBE_TIMEOUT_MS,
     adapter.id === "codex",
   );
@@ -501,7 +481,6 @@ function verifySubscription(
   if (code !== 0) return { detail: "authentication status command failed", ok: false };
   if (cli === "claude") return verifyClaudeSubscription(output);
   if (cli === "codex") return verifyCodexSubscription(output);
-  if (cli === "cursor") return verifyCursorSubscription(output);
   return verifyOpenCodeSubscription(output);
 }
 
@@ -532,24 +511,6 @@ function verifyOpenCodeSubscription(output: string): { ok: true } | { ok: false;
     return { ok: true };
   }
   return { detail: "OpenCode credentials do not identify a subscription or OAuth provider", ok: false };
-}
-
-function verifyCursorSubscription(output: string): { ok: true } | { ok: false; detail: string } {
-  try {
-    const status = JSON.parse(output) as Record<string, unknown>;
-    const authMethod = typeof status.authMethod === "string" ? status.authMethod.toLowerCase() : "";
-    const subscriptionType = typeof status.subscriptionType === "string" ? status.subscriptionType.toLowerCase() : "";
-    if (status.isAuthenticated === true && /subscription|oauth|cursor/u.test(`${authMethod} ${subscriptionType}`)) {
-      return { ok: true };
-    }
-  } catch {
-    // Treat malformed or mixed auth output as unverified.
-  }
-  return { detail: "Cursor authentication does not identify a subscription mode", ok: false };
-}
-
-function prefixArguments(executable: ResolvedExecutable, args: string[]): string[] {
-  return executable.candidate === "cursor" ? ["agent", ...args] : args;
 }
 
 async function probeProcess(
@@ -589,8 +550,7 @@ async function createInvocation(
   const env = sanitizedEnvironment({ preserveCodexHome: adapter.id === "codex" });
   if (adapter.id === "claude") return createClaudeInvocation(env, prompt);
   if (adapter.id === "codex") return createCodexInvocation(env, prompt, workingDirectory, capabilityCheck.disabledFeatures);
-  if (adapter.id === "opencode") return createOpenCodeInvocation(env, workingDirectory, prompt);
-  return createCursorInvocation(env, executable, workingDirectory, prompt);
+  return createOpenCodeInvocation(env, workingDirectory, prompt);
 }
 
 function createClaudeInvocation(env: NodeJS.ProcessEnv, prompt: string): Invocation {
@@ -692,31 +652,6 @@ async function createOpenCodeInvocation(
     args: ["run", "--pure", "--format", "json", "--prompt", prompt],
     env: isolatedEnvironment,
     stdin: undefined,
-  };
-}
-
-function createCursorInvocation(
-  env: NodeJS.ProcessEnv,
-  executable: ResolvedExecutable,
-  workingDirectory: string,
-  prompt: string,
-): Invocation {
-  const commandPrefix = executable.candidate === "cursor" ? ["agent"] : [];
-  return {
-    args: [
-      ...commandPrefix,
-      "-p",
-      "--mode",
-      "ask",
-      "--output-format",
-      "json",
-      "--sandbox",
-      "enabled",
-      "--workspace",
-      workingDirectory,
-      prompt,
-    ],
-    env,
   };
 }
 
