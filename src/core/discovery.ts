@@ -7,6 +7,7 @@ import {
 } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import { homedir } from "node:os";
+import { readClaudeSessionHeader } from "./claude-titles";
 import {
   basename as pathBasename,
   dirname,
@@ -53,6 +54,7 @@ const MAX_FILE_BYTES = 8 * 1024 * 1024;
 const MAX_FILES = 10_000;
 const MAX_DEPTH = 16;
 const DEFAULT_LIMIT = 200;
+const LABELED_CLAUDE_SESSIONS = 300;
 
 type SqlValue = string | number | bigint | Uint8Array | null;
 type SqlRow = Record<string, SqlValue>;
@@ -485,7 +487,7 @@ function applyClaudeIndexes(entries: CatalogEntry[], root: string, state: ScanSt
 
 function scanClaude(home: string, state: ScanState): { entries: CatalogEntry[]; status: DiscoverySourceStatus } {
   const root = sourceRoot(home, ".claude", "projects");
-  const result = scanTextSource("claude", [root], home, state, isJsonl);
+  const result = scanTextSource("claude", [root], home, state, isClaudeSessionFile);
   const inspection = inspectDirectory(root);
   const metadata = inspection.available && applyClaudeIndexes(result.entries, inspection.path, state);
   return {
@@ -494,6 +496,19 @@ function scanClaude(home: string, state: ScanState): { entries: CatalogEntry[]; 
       ? { ...result.status, detail: `${result.status.detail} Read-only Claude session index metadata supplied titles and project paths.` }
       : result.status,
   };
+}
+
+function isClaudeSessionFile(path: string): boolean {
+  return isJsonl(path) && !path.split(sep).includes("subagents");
+}
+
+function labelUntitledClaudeSessions(entries: CatalogEntry[]): void {
+  const untitled = entries.filter((entry) => entry.source === "claude" && entry.title === fileTitle(entry.path));
+  for (const entry of untitled.slice(0, LABELED_CLAUDE_SESSIONS)) {
+    const header = readClaudeSessionHeader(entry.path);
+    if (header.title) entry.title = header.title;
+    if (header.project) entry.project = header.project;
+  }
 }
 
 function isJsonl(path: string): boolean {
@@ -838,6 +853,7 @@ function scanCatalog(home: string): { entries: CatalogEntry[]; sources: Discover
   const cursor = scanCursor(home, cursorState);
   const entries = [...codex.entries, ...claude.entries, ...opencode.entries, ...cursor.entries]
     .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt) || left.id.localeCompare(right.id));
+  labelUntitledClaudeSessions(entries);
   return {
     entries,
     sources: [

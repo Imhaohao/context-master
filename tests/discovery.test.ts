@@ -203,7 +203,7 @@ afterEach(() => {
 });
 
 describe("discoverSessions", () => {
-  it("catalogs Codex, Claude, and OpenCode metadata without reading transcript bodies", async () => {
+  it("catalogs Codex, Claude, and OpenCode sessions without importing them", async () => {
     const home = makeHome();
     const codexText = '{"type":"session_meta","payload":{"id":"codex-1"}}\n';
     writeSession(home, ".codex/sessions/2026/10/06/rollout-demo.jsonl", codexText);
@@ -367,5 +367,22 @@ describe("discoverSessions", () => {
     expect(codex?.project).toBe("/tmp/codex-project");
     expect(claude?.title).toBe("Claude indexed summary");
     expect(claude?.project).toBe("/tmp/claude-project");
+  });
+
+  it("titles unindexed Claude Code sessions from their header and skips subagent transcripts", async () => {
+    const home = makeHome();
+    const lines = [
+      { type: "user", isMeta: true, cwd: "/tmp/tidepool", message: { role: "user", content: "<command-name>/clear</command-name>" } },
+      { type: "user", cwd: "/tmp/tidepool", message: { role: "user", content: [{ type: "text", text: "Why do Stripe webhooks arrive twice?" }] } },
+      { type: "assistant", message: { role: "assistant", content: [{ type: "text", text: "Stripe retries until it gets a 2xx." }] } },
+    ];
+    writeSession(home, ".claude/projects/-tmp-tidepool/0b5c.jsonl", lines.map((line) => JSON.stringify(line)).join("\n"));
+    writeSession(home, ".claude/projects/-tmp-tidepool/0b5c/subagents/agent-1.jsonl", JSON.stringify(lines[1]));
+    writeSession(home, ".claude/projects/-tmp-tidepool/renamed.jsonl", [JSON.stringify(lines[1]), JSON.stringify({ type: "custom-title", customTitle: "Webhook retries" })].join("\n"));
+
+    const result = await discoverSessions({ home, source: "claude" });
+
+    expect(result.sessions.map(({ title }) => title).sort()).toEqual(["Webhook retries", "Why do Stripe webhooks arrive twice?"]);
+    expect(result.sessions.every(({ project }) => project === "/tmp/tidepool")).toBe(true);
   });
 });

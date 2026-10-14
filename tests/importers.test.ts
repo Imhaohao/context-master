@@ -26,6 +26,7 @@ describe("parseSession", () => {
 
     expect(session.source).toBe("claude");
     expect(session.externalId).toBe("claude-demo-1");
+    expect(session.title).toBe("Explain the import boundary.");
     expect(session.messages.map(({ role, text }) => ({ role, text }))).toEqual([
       { role: "user", text: "Explain the import boundary." },
       { role: "assistant", text: "Import only visible conversation text." },

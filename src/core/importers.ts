@@ -4,6 +4,7 @@
  * Imported text is treated as data throughout this module. In particular, no
  * transcript value is evaluated, interpreted as a path, or executed.
  */
+import { claudeSessionHeader } from "./claude-titles";
 
 export type SessionSource = "codex" | "claude" | "opencode" | "cursor" | "chatgpt" | "generic";
 
@@ -268,28 +269,36 @@ function isClaudeRecord(record: JsonObject): boolean {
     (isJsonObject(getValue(record, "message")) || typeof getValue(record, "message") === "string");
 }
 
+function claudeMessage(record: JsonObject, recordType: "user" | "assistant"): ParsedMessage | undefined {
+  const nested = getObject(record, "message");
+  const role = roleFromValue(getValue(nested ?? record, "role")) ?? recordType;
+  const content = nested ? getValue(nested, "content") : getValue(record, "content");
+  const text = contentText(content, new Set(["text"]));
+  return visibleMessage(role, text, getTimestamp(record) ?? (nested ? getTimestamp(nested) : undefined));
+}
+
+function describesClaudeSession(record: JsonObject): boolean {
+  return Boolean(getString(record, "sessionId", "session_id") || getString(record, "cwd", "project"));
+}
+
+function claudeTurnType(record: JsonObject): "user" | "assistant" | undefined {
+  if (record.isMeta === true || record.isSidechain === true) return undefined;
+  const recordType = getString(record, "type");
+  return recordType === "user" || recordType === "assistant" ? recordType : undefined;
+}
+
 function parseClaudeRecords(records: JsonObject[], filename: string): ParsedSession {
-  const messages: ParsedMessage[] = [];
-  let metadata: JsonObject | undefined;
-
-  for (const record of records) {
-    const recordType = getString(record, "type");
-    if (recordType !== "user" && recordType !== "assistant") {
-      if (!metadata && (getString(record, "sessionId", "session_id") || getString(record, "cwd", "project"))) {
-        metadata = record;
-      }
-      continue;
-    }
-    const nested = getObject(record, "message");
-    const role = roleFromValue(getValue(nested ?? record, "role")) ?? (recordType === "user" ? "user" : "assistant");
-    const content = nested ? getValue(nested, "content") : getValue(record, "content");
-    const text = contentText(content, new Set(["text"]));
-    const message = visibleMessage(role, text, getTimestamp(record) ?? (nested ? getTimestamp(nested) : undefined));
-    if (message) messages.push(message);
-    if (!metadata) metadata = record;
-  }
-
-  return sessionMetadata(filename, "claude", messages, metadata);
+  const visible = records.filter((record) => record.isMeta !== true && record.isSidechain !== true);
+  const messages = visible.flatMap((record) => {
+    const turnType = claudeTurnType(record);
+    const message = turnType ? claudeMessage(record, turnType) : undefined;
+    return message ? [message] : [];
+  });
+  const metadata = visible.find((record) => claudeTurnType(record) !== undefined || describesClaudeSession(record));
+  const session = sessionMetadata(filename, "claude", messages, metadata);
+  const header = claudeSessionHeader(records);
+  if (header.title) session.title = header.title;
+  return session;
 }
 
 function genericMessage(object: JsonObject): ParsedMessage | undefined {
