@@ -1,0 +1,67 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: var(--font-plex-sans), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --color-canvas: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-raised: #e8edf1;
+  --color-ink: #202830;
+  --color-muted: #54606c;
+  --color-line: #c8d0d7;
+  --color-accent: #385d47;
+  --color-focus: #385d47;
+  --radius-control: 0.5rem;
+  --radius-panel: 0.75rem;
+  --shadow-panel: 0 0 0 1px #0000000a, 0 8px 28px #00000008;
+  --shadow-shot: 0 0 0 1px #0000001a, 0 30px 80px -20px #1b2a2140;
+  --ease-interface: cubic-bezier(0.2, 0, 0, 1);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-canvas: #121416; --color-surface: #1c1f23; --color-raised: #2a2e33;
+    --color-ink: #edf0f2; --color-muted: #a8b1bb; --color-line: #373e45;
+    --color-accent: #a5c3af; --color-focus: #bad6c4;
+    --shadow-panel: 0 0 0 1px #ffffff0a, 0 8px 28px #00000030;
+    --shadow-shot: 0 0 0 1px #ffffff1a, 0 30px 80px -20px #000000a0;
+  }
+}
+
+@layer base {
+  html { color-scheme: light dark; }
+  body { @apply bg-canvas text-ink font-sans antialiased; line-height: 1.6; }
+  h1, h2, h3 { text-wrap: balance; }
+  p { text-wrap: pretty; }
+  a { @apply underline decoration-line underline-offset-4; transition: text-decoration-color 150ms var(--ease-interface); }
+  a:hover { @apply decoration-ink; }
+  :focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; border-radius: 4px; }
+}
+
+@layer components {
+  .page { @apply mx-auto w-full max-w-6xl px-4 sm:px-8; }
+  .lede { @apply text-lg text-muted max-w-[52ch]; }
+  .section-title { @apply text-2xl font-medium; }
+  .command { @apply flex items-start gap-3 rounded-panel bg-surface p-4; box-shadow: var(--shadow-panel); }
+  .command pre { @apply m-0 min-w-0 flex-1 font-mono text-sm; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; }
+  .button { @apply inline-flex shrink-0 items-center gap-2 rounded-control px-3 py-2 text-sm font-medium no-underline; transition-property: background-color, scale; transition-duration: 150ms; transition-timing-function: var(--ease-interface); }
+  .button:active { scale: 0.96; }
+  .button-quiet { @apply bg-raised text-ink; }
+  .button-quiet:hover { background-color: color-mix(in oklab, var(--color-raised), var(--color-ink) 8%); }
+  .screenshot { @apply block h-auto w-full rounded-panel; box-shadow: var(--shadow-shot); outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
+  .facts { @apply grid gap-x-8 text-base; grid-template-columns: minmax(0, 14rem) minmax(0, 1fr); }
+  .facts dt { @apply py-4 font-medium; border-top: 1px solid var(--color-line); }
+  .facts dd { @apply m-0 py-4 text-muted; border-top: 1px solid var(--color-line); }
+  @media (max-width: 640px) {
+    .facts { grid-template-columns: minmax(0, 1fr); }
+    .facts dd { @apply pt-0; border-top: 0; }
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .screenshot { outline-color: oklch(1 0 0 / 0.1); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .rise { animation: rise 600ms var(--ease-interface) both; }
+  .rise-late { animation-delay: 120ms; }
+  @keyframes rise { from { opacity: 0; translate: 0 12px; } }
+}
