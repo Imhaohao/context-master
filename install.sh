@@ -12,7 +12,9 @@ fail() { printf 'Context Master: %s\n' "$1" >&2; exit 1; }
 [ "$(uname -s)" = "Darwin" ] || fail "this installer is for macOS."
 [ "$(uname -m)" = "arm64" ] || fail "the current build runs on Apple silicon Macs only."
 
-if [ -w /Applications ]; then target_dir=/Applications; else target_dir="$HOME/Applications"; fi
+if [ -n "${CONTEXT_MASTER_INSTALL_DIR:-}" ]; then target_dir=$CONTEXT_MASTER_INSTALL_DIR
+elif [ -w /Applications ]; then target_dir=/Applications
+else target_dir="$HOME/Applications"; fi
 mkdir -p "$target_dir"
 work_dir=$(mktemp -d)
 trap 'rm -rf "$work_dir"' EXIT
