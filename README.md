@@ -8,6 +8,8 @@ Context Master is a Mac app that turns your old Claude Code, Codex, OpenCode and
 
 ## Install
 
+Download page: https://context-master-site.vercel.app
+
 ```bash
 curl -fsSL https://github.com/Imhaohao/context-master/releases/latest/download/install.sh | sh
 ```
