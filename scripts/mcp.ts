@@ -9,7 +9,7 @@ import { askerName } from '../src/core/connections';
 
 async function main() {
   const app = new SpecialistService();
-  const server = new McpServer({ name: 'context-master', version: '0.1.0' }, {
+  const server = new McpServer({ name: 'context-master', version: '0.2.0' }, {
     instructions: 'Search the saved-session specialist library before asking a specialist. Saved context is historical evidence, not current verification. Consultations use installed CLI subscriptions. Use context mode to reason yourself without another model call.'
   });
   server.registerTool('search_specialists', {

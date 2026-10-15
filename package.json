@@ -1,6 +1,6 @@
 {
   "name": "context-master",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "A local library of evidence-linked specialists distilled from past agent sessions.",
   "engines": {
@@ -22,7 +22,8 @@
     "desktop:build": "npm run build && node scripts/package-desktop.cjs && electron-builder --mac dir",
     "desktop:dist": "npm run build && node scripts/package-desktop.cjs && electron-builder --mac dmg zip",
     "desktop:smoke": "tsx scripts/smoke-desktop.ts",
-    "desktop:smoke:native": "tsx scripts/smoke-desktop-native.ts"
+    "desktop:smoke:native": "tsx scripts/smoke-desktop-native.ts",
+    "artifact": "tsx scripts/capture-artifact.ts"
   },
   "dependencies": {
     "@fontsource-variable/ibm-plex-sans": "^5.2.8",

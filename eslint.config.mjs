@@ -5,5 +5,5 @@ export default defineConfig([
   ...nextVitals, ...nextTs,
   { rules: { complexity: ['error', 15], '@typescript-eslint/no-explicit-any': 'error' } },
   { files: ['**/*.cjs'], rules: { '@typescript-eslint/no-require-imports': 'off' } },
-  globalIgnores(['.next/**', 'coverage/**', 'playwright-report/**', 'test-results/**', 'next-env.d.ts', 'desktop-bundle/**', 'agent-bundle/**', 'desktop-app/**', 'release/**'])
+  globalIgnores(['.next/**', 'coverage/**', 'playwright-report/**', 'test-results/**', 'next-env.d.ts', 'desktop-bundle/**', 'agent-bundle/**', 'desktop-app/**', 'release/**', 'site/.next/**', 'site/node_modules/**', 'site/next-env.d.ts'])
 ]);

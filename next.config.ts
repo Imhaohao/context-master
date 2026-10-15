@@ -4,7 +4,7 @@ const config: NextConfig = {
   // Runtime cache writes would invalidate the signed Mac app bundle.
   experimental: { isrFlushToDisk: false },
   turbopack: { root: process.cwd() },
-  outputFileTracingExcludes: { '*': ['tests/**/*', '.git/**/*', '.env*', 'PROGRESS.txt', 'test-results/**/*', 'release/**/*', 'desktop-bundle/**/*', 'agent-bundle/**/*', 'desktop-app/**/*'] },
+  outputFileTracingExcludes: { '*': ['tests/**/*', '.git/**/*', '.env*', 'PROGRESS.txt', 'test-results/**/*', 'release/**/*', 'desktop-bundle/**/*', 'agent-bundle/**/*', 'desktop-app/**/*', 'site/**/*'] },
   async headers() {
     return [{ source: '/:path*', headers: [
       { key: 'X-Content-Type-Options', value: 'nosniff' },
