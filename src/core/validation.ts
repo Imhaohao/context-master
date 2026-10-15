@@ -9,7 +9,8 @@ export const specialistInput = z.object({
 export const specialistUpdate = specialistInput.extend({ revision: z.number().int().positive() });
 export const consultationInput = z.object({
   specialistId: z.string().uuid(), question: z.string().trim().min(3).max(4000),
-  mode: z.enum(['answer', 'context']).default('answer'), cli: cliSchema.optional()
+  mode: z.enum(['answer', 'context']).default('answer'), cli: cliSchema.optional(),
+  askedBy: z.string().trim().min(1).max(80).optional()
 });
 export const fileInput = z.object({ name: z.string().min(1).max(250), text: z.string().min(1).max(8 * 1024 * 1024) });
 export class AppError extends Error {

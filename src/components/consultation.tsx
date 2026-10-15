@@ -70,7 +70,7 @@ function EvidenceList({ evidence, onSource }: { evidence: Evidence[]; onSource: 
 }
 
 function ConsultationResult({ run, specialist, events, active, copied, onCopy, onSource, onSuggestedQuestion }: { run?: Consultation; specialist: Specialist; events: RunEvent[]; active: boolean; copied: boolean; onCopy: () => void; onSource: (id: string, ordinal: number) => void; onSuggestedQuestion: () => void }) {
-  return run ? <><div className="question-bubble"><span className="message-speaker">You asked</span><p>{run.question}</p></div>
+  return run ? <><div className="question-bubble"><span className="message-speaker">{run.askedBy ? `Asked by ${run.askedBy}` : 'You asked'}</span><p>{run.question}</p></div>
         <div className="specialist-answer"><div className="answer-heading"><span className="message-speaker"><ChatCircle size={18} aria-hidden="true" />{specialist.name}</span><RunBadge run={run} /></div>
           {active && <div className="run-progress" role="status"><span className="run-pulse" aria-hidden="true" /><p>{run.status === 'queued' ? 'Waiting for a specialist slot…' : `${sourceNames[run.cli]} is answering from the saved context…`}</p></div>}
           {run.status === 'completed' && <CompletedAnswer run={run} copied={copied} onCopy={onCopy} onSource={onSource} />}

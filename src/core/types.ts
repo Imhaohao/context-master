@@ -18,7 +18,7 @@ export interface Consultation {
   id: string; specialistId: string; specialistName: string; question: string; mode: 'answer' | 'context';
   cli: AgentCli; status: RunStatus; answer: string; evidence: Evidence[]; context: string;
   error: string | null; createdAt: string; completedAt: string | null; durationMs: number | null;
-  briefRevision: number;
+  briefRevision: number; askedBy: string | null;
 }
 export interface RunEvent { id: number; runId: string; type: 'status' | 'output'; text: string; createdAt: string }
 export interface Library { sessions: Session[]; specialists: Specialist[]; consultations: Consultation[] }

@@ -13,7 +13,7 @@ const specialistColumns = `id, name, description, brief, tags, cli, created_at A
  updated_at AS updatedAt, revision, archived`;
 const consultationColumns = `id, specialist_id AS specialistId, specialist_name AS specialistName,
  question, mode, cli, status, answer, evidence, context, error, created_at AS createdAt,
- completed_at AS completedAt, duration_ms AS durationMs, brief_revision AS briefRevision`;
+ completed_at AS completedAt, duration_ms AS durationMs, brief_revision AS briefRevision, asked_by AS askedBy`;
 function rows<T>(statement: StatementSync, ...values: SQLInputValue[]): T[] { return statement.all(...values) as unknown as T[]; }
 function row<T>(statement: StatementSync, ...values: SQLInputValue[]): T | undefined { return statement.get(...values) as unknown as T | undefined; }
 type SpecialistRow = Omit<Specialist, 'tags' | 'archived' | 'sessionIds' | 'sourceCharacters'> & { tags: string; archived: number };
@@ -132,7 +132,7 @@ export class LibraryStore {
     if (references) throw new AppError('This session supports a specialist. Remove it from that specialist before deleting it.', 409);
     this.db.prepare('DELETE FROM sessions WHERE id = ?').run(id);
   }
-  createConsultation(input: Pick<Consultation, 'specialistId' | 'question' | 'mode' | 'cli' | 'evidence' | 'context'> & { owner?: string }): Consultation {
+  createConsultation(input: Pick<Consultation, 'specialistId' | 'question' | 'mode' | 'cli' | 'evidence' | 'context'> & { owner?: string; askedBy?: string }): Consultation {
     const specialist = this.specialist(input.specialistId);
     if (specialist.archived) throw new AppError('Restore this specialist before asking it a question.', 409);
     const id = randomUUID();
@@ -141,9 +141,9 @@ export class LibraryStore {
       const active = row<{ count: number }>(this.db.prepare("SELECT count(*) AS count FROM consultations WHERE status IN ('queued','running')"))?.count ?? 0;
       if (input.mode === 'answer' && active >= 10) throw new AppError('The specialist queue is full. Let a consultation finish before asking again.', 429);
       const now = new Date().toISOString();
-      this.db.prepare(`INSERT INTO consultations (id, specialist_id, specialist_name, question, mode, cli, status, evidence, context, created_at, brief_revision, owner, heartbeat)
-        VALUES (?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?, ?)`).run(id, specialist.id, specialist.name, redactCredentials(input.question).text, input.mode, input.cli,
-          JSON.stringify(input.evidence), redactCredentials(input.context).text, now, specialist.revision, input.owner ?? null, input.owner ? now : null);
+      this.db.prepare(`INSERT INTO consultations (id, specialist_id, specialist_name, question, mode, cli, status, evidence, context, created_at, brief_revision, owner, heartbeat, asked_by)
+        VALUES (?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?, ?, ?)`).run(id, specialist.id, specialist.name, redactCredentials(input.question).text, input.mode, input.cli,
+          JSON.stringify(input.evidence), redactCredentials(input.context).text, now, specialist.revision, input.owner ?? null, input.owner ? now : null, input.askedBy ?? null);
     });
     return this.consultation(id);
   }

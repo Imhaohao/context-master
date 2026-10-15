@@ -5,6 +5,7 @@ import { SpecialistService } from '../src/core/service';
 import { contextPacket, selectEvidence } from '../src/core/context';
 import { redactCredentials } from '../src/core/redaction';
 import { cliSchema } from '../src/core/validation';
+import { askerName } from '../src/core/connections';
 
 async function main() {
   const app = new SpecialistService();
@@ -30,7 +31,7 @@ async function main() {
     inputSchema: { specialistId: z.string().uuid(), question: z.string().min(3).max(4000), cli: cliSchema.optional() },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true }
   }, async ({ specialistId, question, cli }, extra) => {
-    try { const run = app.start({ specialistId, question, cli, mode: 'answer' }); const completed = await app.wait(run.id, extra.signal); return result(completed, completed.status !== 'completed'); }
+    try { const run = app.start({ specialistId, question, cli, mode: 'answer', askedBy: askerName(server.server.getClientVersion()?.name) }); const completed = await app.wait(run.id, extra.signal); return result(completed, completed.status !== 'completed'); }
     catch (error) { return failure(error); }
   });
   server.registerTool('get_consultation', {

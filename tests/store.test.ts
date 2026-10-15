@@ -1,4 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { openDatabase } from '../src/core/database';
 import { LibraryStore } from '../src/core/store';
 import { draftBrief, matchSpecialists, selectEvidence, validateCitations } from '../src/core/context';
@@ -71,5 +74,23 @@ describe('library invariants', () => {
     const { library, specialist } = setup(); const run = library.createConsultation({ specialistId: specialist.id, question: 'Why?', mode: 'answer', cli: 'claude', context: 'packet', evidence: [] });
     library.transitionRun(run.id, 'running'); library.transitionRun(run.id, 'cancelled'); library.transitionRun(run.id, 'completed', { answer: 'Late output' });
     expect(library.consultation(run.id).status).toBe('cancelled'); expect(library.consultation(run.id).answer).toBe('');
+  });
+});
+describe('schema migration', () => {
+  it('upgrades a version 1 library in place and records who asked', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'context-master-migration-'));
+    const filename = join(directory, 'library.db');
+    try {
+      const legacy = openDatabase(filename);
+      legacy.exec('ALTER TABLE consultations DROP COLUMN asked_by; PRAGMA user_version = 1;');
+      legacy.close();
+      const library = new LibraryStore(openDatabase(filename));
+      stores.push(library);
+      expect((library.db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version).toBe(2);
+      const session = library.import(transcript, 'session.json').sessions[0];
+      const specialist = library.createSpecialist({ ...draftBrief([library.session(session.id)]), cli: 'claude', sessionIds: [session.id] });
+      const run = library.createConsultation({ specialistId: specialist.id, question: 'What prevents races?', mode: 'context', cli: 'claude', evidence: [], context: 'packet', askedBy: 'Claude Code' });
+      expect(run.askedBy).toBe('Claude Code');
+    } finally { rmSync(directory, { recursive: true, force: true }); }
   });
 });

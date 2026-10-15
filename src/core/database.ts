@@ -22,10 +22,14 @@ export function openDatabase(path?: string): DatabaseSync {
   if (filename !== ':memory:') chmodSync(filename, 0o600);
   return db;
 }
+const SCHEMA_VERSION = 2;
 function migrate(db: DatabaseSync) {
   const version = (db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version;
-  if (version > 1) throw new Error('This library was created by a newer Context Master. Update the app before opening it.');
-  if (version === 1) return;
+  if (version > SCHEMA_VERSION) throw new Error('This library was created by a newer Context Master. Update the app before opening it.');
+  if (version < 1) createSchema(db);
+  if (version < 2) db.exec('BEGIN IMMEDIATE; ALTER TABLE consultations ADD COLUMN asked_by TEXT; PRAGMA user_version = 2; COMMIT;');
+}
+function createSchema(db: DatabaseSync) {
   db.exec(`BEGIN IMMEDIATE;
     CREATE TABLE sessions (
       id TEXT PRIMARY KEY, fingerprint TEXT UNIQUE NOT NULL, external_id TEXT, title TEXT NOT NULL,

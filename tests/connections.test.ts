@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { agentConnections, shellQuote } from '../src/core/connections';
+import { agentConnections, askerName, shellQuote } from '../src/core/connections';
 
 describe('agent connection commands', () => {
   it('quotes paths with spaces and passes environment flags in each CLI syntax', () => {
@@ -15,5 +15,11 @@ describe('agent connection commands', () => {
   it('escapes single quotes so a pasted command cannot break out of its argument', () => {
     expect(shellQuote("/tmp/it's here")).toBe(`'/tmp/it'\\''s here'`);
     expect(shellQuote('/usr/local/bin/node')).toBe('/usr/local/bin/node');
+  });
+
+  it('names the agent that asked over MCP', () => {
+    expect(askerName('claude-code')).toBe('Claude Code');
+    expect(askerName('my-agent')).toBe('my-agent');
+    expect(askerName(undefined)).toBe('An MCP client');
   });
 });

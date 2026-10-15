@@ -16,3 +16,9 @@ export function agentConnections(launch: McpLaunch): AgentConnection[] {
     { agent: 'Codex', command: ['codex mcp add context-master', ...envFlags('--env', launch.env), '--', server].join(' ') }
   ];
 }
+
+const knownClients: Record<string, string> = { 'claude-code': 'Claude Code', 'codex-mcp-client': 'Codex' };
+export function askerName(clientName: string | undefined): string {
+  if (!clientName?.trim()) return 'An MCP client';
+  return knownClients[clientName] ?? clientName.trim().slice(0, 80);
+}

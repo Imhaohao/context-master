@@ -23,7 +23,7 @@ async function execute(app: SpecialistService, command: string, args: string[]):
     case 'specialists': return app.search(args.join(' '), 20);
     case 'create': { const id = required(args[0], 'Imported session ID'); const draft = draftBrief([app.store.session(id)]); return app.store.createSpecialist({ ...draft, name: required(args[1], 'Specialist name'), cli: await preferredCli(), sessionIds: [id] }); }
     case 'context': return app.start({ specialistId: required(args[0], 'Specialist ID'), question: required(args[1], 'Question'), mode: 'context' });
-    case 'ask': { const run = app.start({ specialistId: required(args[0], 'Specialist ID'), question: required(args[1], 'Question'), mode: 'answer', ...(args[2] ? { cli: cliSchema.parse(args[2]) } : {}) }); const completed = await app.wait(run.id); if (completed.status !== 'completed') process.exitCode = 1; return completed; }
+    case 'ask': { const run = app.start({ specialistId: required(args[0], 'Specialist ID'), question: required(args[1], 'Question'), mode: 'answer', askedBy: 'Command line', ...(args[2] ? { cli: cliSchema.parse(args[2]) } : {}) }); const completed = await app.wait(run.id); if (completed.status !== 'completed') process.exitCode = 1; return completed; }
     default: throw new Error(`Unknown command: ${command}\n${usage}`);
   }
 }
